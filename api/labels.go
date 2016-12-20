@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/praelatus/backend/models"
+	"github.com/praelatus/backend/mw"
 )
 
 func InitLabelRoutes() {
@@ -48,14 +49,16 @@ func GetLabel(w http.ResponseWriter, r *http.Request) {
 		lbl.Name = vars["idOrName"]
 	}
 
-	label, err := Store.Labels().Get(lbl)
+	lbl.ID = int64(i)
+
+	err = Store.Labels().Get(lbl)
 	if err != nil {
 		w.WriteHeader(500)
 		w.Write([]byte(err.Error()))
 		return
 	}
 
-	jsn, err := json.Marshal(label)
+	jsn, err := json.Marshal(lbl)
 	if err != nil {
 		w.WriteHeader(500)
 		w.Write([]byte(err.Error()))
@@ -76,31 +79,24 @@ func CreateLabel(w http.ResponseWriter, r *http.Request) {
 		lbl.Name = vars["idOrName"]
 	}
 
-	lbl.ID = i
+	lbl.ID = int64(i)
 
-	err := Store.Labels().New(lbl)
+	err = Store.Labels().New(lbl)
 	if err != nil {
 		w.WriteHeader(500)
 		w.Write([]byte(err.Error()))
 		return
 	}
 
-	w.Write(jsn)
+	w.Write([]byte(lbl.String()))
 }
 
 // UpdateLabel updates the label in the db and returns a message indicating
 // success or failure.
 func UpdateLabel(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
+	lbl := models.Label{}
 
-	lbl := &models.Label{}
-
-	i, err := strconv.Atoi(vars["idOrName"])
-	if err != nil {
-		lbl.Name = vars["idOrName"]
-	}
-
-	err := Store.Label().Save(lbl)
+	err := Store.Labels().Save(lbl)
 	if err != nil {
 		w.WriteHeader(500)
 		w.Write([]byte(err.Error()))
@@ -114,16 +110,9 @@ func UpdateLabel(w http.ResponseWriter, r *http.Request) {
 // DeleteLabel deletes labels from the db and returns a repsonse indicating
 // success of failure.
 func DeleteLabel(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
+	lbl := models.Label{}
 
-	lbl := &models.Label{}
-
-	i, err := strconv.Atoi(vars["idOrName"])
-	if err != nil {
-		lbl.Name = vars["idOrName"]
-	}
-
-	label, err := Store.Labels().Remove(lbl)
+	err := Store.Labels().Remove(lbl)
 	if err != nil {
 		w.WriteHeader(500)
 		w.Write([]byte(err.Error()))
